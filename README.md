@@ -32,3 +32,11 @@ $ python vBulldozer.py https://vb.test.local/
 {+} Done!
 $
 ```
+
+Todo:
+* Maybe implement this whole gubbins for previous vb 5.x exploits - a rewrite of my old vBullshit might be in order?
+* Fix bugs. 
+* Add more bugs.
+
+Licence:
+WTFPL
