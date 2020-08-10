@@ -9,6 +9,8 @@ I mostly wrote that as a joke, its called "equifax mode", as it could lead to yo
 
 This is the loudest, most unclean, exploit I think I've written in a while. It has absolutely zero stealth features.
 
+For the writeup by zenofex on how this bug was found, see here: https://blog.exploitee.rs/2020/exploiting-vbulletin-a-tale-of-patch-fail/
+
 ```
 $ python vBulldozer.py https://vb.test.local/
 {+} Checking https://vb.test.local/
