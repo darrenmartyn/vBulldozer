@@ -1,5 +1,5 @@
 # vBulldozer
-Very loud vBulletin exploit, WIP.
+Very loud vBulletin exploit, WIP. Exploits: CVE-2020-7373
 
 Currently gives you a way to execute arbritary PHP code, and does some info-gathering. Deliberately loud as heck. 
 
@@ -39,6 +39,7 @@ Todo:
 * Maybe implement this whole gubbins for previous vb 5.x exploits - a rewrite of my old vBullshit might be in order?
 * Fix bugs. 
 * Add more bugs.
+* Finish testing and committing updated version with alternative exploitation options that don't involve dropping a webshell.
 
 Licence:
 WTFPL
